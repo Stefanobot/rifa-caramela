@@ -11,6 +11,24 @@ supabase = create_client(url, key)
 # --- CONFIGURACIÓN VISUAL DE LA PÁGINA ---
 st.set_page_config(page_title="Rifa para Caramela", page_icon="🐾", layout="centered")
 
+# --- ESTILOS PERSONALIZADOS (CSS) ---
+# Esto cambiará el color de los botones ocupados a rosado
+st.markdown("""
+    <style>
+    /* Estilo para botones deshabilitados (Ocupados) */
+    stButton > button:disabled {
+        background-color: #FFC0CB !important; /* Rosado claro */
+        color: #000000 !important; /* Texto negro para que se vea claro */
+        border: 1px solid #FF69B4 !important;
+        opacity: 1 !important;
+    }
+    /* Estilo para botones seleccionados o activos */
+    stButton > button {
+        border-radius: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Título de la app
 st.title("🐾 Rifa para Caramela")
 
@@ -42,28 +60,23 @@ st.write("### Escoge un número disponible ❤️")
 
 # --- LÓGICA DE DATOS ---
 try:
-    # Consultar números ya reservados en Supabase
     datos = supabase.table("rifa").select("numero").execute()
-    # Guardamos los números ocupados como strings de dos dígitos para comparar fácilmente
     ocupados = [str(fila["numero"]).zfill(2) for fila in datos.data] if datos.data else []
 except Exception as e:
     st.error(f"Error al conectar con la base de datos: {e}")
     ocupados = []
 
-# --- INTERFAZ DE GRILLA (Consola de números) ---
-# Creamos una cuadrícula de 10 columnas
+# --- INTERFAZ DE GRILLA ---
 cols = st.columns(10)
 
-# Generar números del 00 al 99
 for i in range(100):
-    num_str = str(i).zfill(2)  # Convierte 1 en "01", 9 en "09", etc.
+    num_str = str(i).zfill(2)
     
     with cols[i % 10]:
         if num_str in ocupados:
-            # Botón deshabilitado si ya está vendido
+            # Botón deshabilitado (ahora se verá rosado por el CSS de arriba)
             st.button(num_str, key=f"btn_{num_str}", disabled=True, use_container_width=True)
         else:
-            # Botón activo para seleccionar
             if st.button(num_str, key=f"btn_{num_str}", use_container_width=True):
                 st.session_state.seleccionado = num_str
 
@@ -82,7 +95,6 @@ if "seleccionado" in st.session_state:
         if btn_confirmar:
             if nombre and celular:
                 try:
-                    # Insertar en Supabase
                     supabase.table("rifa").insert({
                         "numero": num_elegido,
                         "nombre": nombre,
@@ -90,9 +102,8 @@ if "seleccionado" in st.session_state:
                     }).execute()
                     
                     st.balloons()
-                    st.success(f"¡Excelente! El número {num_elegido} ha sido apartado. Recuerda enviar el soporte de los $20.000 al WhatsApp 3505651851.")
+                    st.success(f"¡Excelente! El número {num_elegido} ha sido apartado. Recuerda enviar el soporte al WhatsApp 3505651851.")
                     
-                    # Limpiar selección y recargar la página para actualizar la grilla
                     del st.session_state.seleccionado
                     st.rerun()
                 except Exception as e:
