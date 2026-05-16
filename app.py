@@ -11,15 +11,15 @@ supabase = create_client(url, key)
 # --- CONFIGURACIÓN VISUAL DE LA PÁGINA ---
 st.set_page_config(page_title="Rifa para Caramela", page_icon="🐾", layout="centered")
 
-# --- ESTILOS PERSONALIZADOS (CSS MEJORADO) ---
+# --- ESTILOS PERSONALIZADOS (CSS) ---
 st.markdown("""
     <style>
     /* 1. Estilo para botones OCUPADOS (Deshabilitados) */
     div[data-testid="stButton"] button:disabled {
         background-color: #FFC0CB !important; /* Rosado claro */
-        color: #D81B60 !important; /* Texto fucsia oscuro para contraste */
-        border: 2px solid #FF69B4 !important; /* Borde fucsia */
-        opacity: 1 !important; /* Quitar la transparencia por defecto */
+        color: #D81B60 !important; /* Texto fucsia oscuro */
+        border: 2px solid #FF69B4 !important;
+        opacity: 1 !important;
         font-weight: bold !important;
     }
 
@@ -30,7 +30,7 @@ st.markdown("""
         transition: 0.3s;
     }
 
-    /* 3. Estilo para el botón cuando el usuario lo toca (Seleccionado) */
+    /* 3. Estilo para el botón seleccionado */
     div[data-testid="stButton"] button:active, div[data-testid="stButton"] button:focus {
         background-color: #007BFF !important;
         color: white !important;
@@ -61,9 +61,8 @@ st.info("""
 
 ---
 
-### 💳 ¿Cómo pagar y reportar?
+### 💳 ¿Cómo pagar?
 1. Realiza tu transferencia a **Nequi** o **Daviplata** al número: **350 565 1851**
-2. Una vez reserves tu número abajo, **es obligatorio** enviar el comprobante de pago por WhatsApp al mismo número para asegurar tu cupo.
 """)
 
 st.write("### Escoge un número disponible ❤️")
@@ -84,10 +83,8 @@ for i in range(100):
     
     with cols[i % 10]:
         if num_str in ocupados:
-            # Botón deshabilitado (Rosado)
             st.button(num_str, key=f"btn_{num_str}", disabled=True, use_container_width=True)
         else:
-            # Botón disponible
             if st.button(num_str, key=f"btn_{num_str}", use_container_width=True):
                 st.session_state.seleccionado = num_str
 
@@ -101,19 +98,36 @@ if "seleccionado" in st.session_state:
         nombre = st.text_input("Nombre completo")
         celular = st.text_input("Número de celular (WhatsApp)")
         
+        # NUEVO: Check list (Radio) para que el cliente elija su estado
+        opcion_pago = st.radio(
+            "¿Ya realizaste el pago?",
+            ["Pendiente de pago", "Ya realicé el pago"],
+            help="Selecciona una opción para reportar tu estado actual."
+        )
+        
         btn_confirmar = st.form_submit_button("Confirmar Reserva")
         
         if btn_confirmar:
             if nombre and celular:
                 try:
+                    # Guardamos según lo que el usuario seleccionó
+                    estado_para_base = "Pagado" if opcion_pago == "Ya realicé el pago" else "Pendiente"
+                    
                     supabase.table("rifa").insert({
                         "numero": num_elegido,
                         "nombre": nombre,
-                        "celular": celular
+                        "celular": celular,
+                        "estado_pago": estado_para_base
                     }).execute()
                     
                     st.balloons()
-                    st.success(f"¡Excelente! El número {num_elegido} ha sido apartado. Recuerda enviar el soporte al WhatsApp 3505651851.")
+                    st.success(f"¡Excelente! El número {num_elegido} ha sido apartado.")
+                    
+                    # Mensaje condicional según lo que marcó
+                    if estado_para_base == "Pagado":
+                        st.info("✅ Gracias por tu pago. Por favor envía el soporte al WhatsApp 3505651851 para validar.")
+                    else:
+                        st.warning("⏳ Tu reserva está pendiente. Recuerda pagar y enviar el soporte al WhatsApp 3505651851.")
                     
                     del st.session_state.seleccionado
                     st.rerun()
@@ -121,3 +135,6 @@ if "seleccionado" in st.session_state:
                     st.error(f"Hubo un error al guardar: {e}")
             else:
                 st.warning("Por favor, completa tu nombre y celular para reservar.")
+
+    # Mensaje recordatorio fijo debajo del formulario
+    st.caption("⚠️ Si ya realizaste el pago envía soporte al Whatsapp 3505651851")
