@@ -11,20 +11,30 @@ supabase = create_client(url, key)
 # --- CONFIGURACIÓN VISUAL DE LA PÁGINA ---
 st.set_page_config(page_title="Rifa para Caramela", page_icon="🐾", layout="centered")
 
-# --- ESTILOS PERSONALIZADOS (CSS) ---
-# Esto cambiará el color de los botones ocupados a rosado
+# --- ESTILOS PERSONALIZADOS (CSS MEJORADO) ---
 st.markdown("""
     <style>
-    /* Estilo para botones deshabilitados (Ocupados) */
-    stButton > button:disabled {
+    /* 1. Estilo para botones OCUPADOS (Deshabilitados) */
+    div[data-testid="stButton"] button:disabled {
         background-color: #FFC0CB !important; /* Rosado claro */
-        color: #000000 !important; /* Texto negro para que se vea claro */
-        border: 1px solid #FF69B4 !important;
-        opacity: 1 !important;
+        color: #D81B60 !important; /* Texto fucsia oscuro para contraste */
+        border: 2px solid #FF69B4 !important; /* Borde fucsia */
+        opacity: 1 !important; /* Quitar la transparencia por defecto */
+        font-weight: bold !important;
     }
-    /* Estilo para botones seleccionados o activos */
-    stButton > button {
-        border-radius: 5px;
+
+    /* 2. Estilo para botones DISPONIBLES */
+    div[data-testid="stButton"] button {
+        border-radius: 8px;
+        border: 1px solid #dcdcdc;
+        transition: 0.3s;
+    }
+
+    /* 3. Estilo para el botón cuando el usuario lo toca (Seleccionado) */
+    div[data-testid="stButton"] button:active, div[data-testid="stButton"] button:focus {
+        background-color: #007BFF !important;
+        color: white !important;
+        border: 2px solid #0056b3 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -32,7 +42,7 @@ st.markdown("""
 # Título de la app
 st.title("🐾 Rifa para Caramela")
 
-# --- MENSAJE EMOTIVO DE CARAMELA ---
+# --- MENSAJE EMOTIVO ---
 st.warning("""
 ### 🐶 ¡Hola! Soy Caramela...
 Tengo un problema muy grave en mi **patita trasera derecha** que no me permite apoyarla, por lo que ando caminado cojita y me duele bastante. 
@@ -41,7 +51,7 @@ Mis papitos están haciendo esta rifa porque necesito un **tratamiento médico m
 ¡Ayúdame a sanar mi patita comprando una boleta! Cada granito de arena cuenta muchísimo para mí. ❤️
 """)
 
-# --- INFORMACIÓN DEL SORTEO Y PAGO ---
+# --- INFORMACIÓN DEL SORTEO ---
 st.info("""
 **💰 Valor de la boleta:** $20.000 COP  
 **🏆 Premio:** $500.000 COP al número ganador  
@@ -53,7 +63,7 @@ st.info("""
 
 ### 💳 ¿Cómo pagar y reportar?
 1. Realiza tu transferencia a **Nequi** o **Daviplata** al número: **350 565 1851**
-2. Una vez reserves tu número abajo, **es obligatorio** enviar el comprobante de pago por WhatsApp al mismo número (**350 565 1851**) para asegurar tu cupo.
+2. Una vez reserves tu número abajo, **es obligatorio** enviar el comprobante de pago por WhatsApp al mismo número para asegurar tu cupo.
 """)
 
 st.write("### Escoge un número disponible ❤️")
@@ -74,9 +84,10 @@ for i in range(100):
     
     with cols[i % 10]:
         if num_str in ocupados:
-            # Botón deshabilitado (ahora se verá rosado por el CSS de arriba)
+            # Botón deshabilitado (Rosado)
             st.button(num_str, key=f"btn_{num_str}", disabled=True, use_container_width=True)
         else:
+            # Botón disponible
             if st.button(num_str, key=f"btn_{num_str}", use_container_width=True):
                 st.session_state.seleccionado = num_str
 
